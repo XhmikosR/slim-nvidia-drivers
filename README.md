@@ -7,7 +7,8 @@ package and creates a new archive.
 
 ## Drivers tested:
 
-v388 - v391
+* v397.93: use v0.2
+* v388 - v391: use v0.1
 
 ## Requirements:
 

@@ -21,7 +21,7 @@ set "ARG1=%~1"
 set "FULL_PATH=%ARG1%"
 set "FILENAME=%~n1"
 set "WORK_FOLDER=%FILENAME%"
-set "SCRIPT_VERSION=0.1"
+set "SCRIPT_VERSION=0.2"
 
 title %BATCH_FILENAME% %FILENAME%
 
@@ -64,11 +64,15 @@ pushd "%WORK_FOLDER%"
 rem Minimal
 call :copy "minimal"
 if ERRORLEVEL 1 goto exit
+call :modify_setup_cfg
+if ERRORLEVEL 1 goto exit
 call :create_archive "minimal"
 if ERRORLEVEL 1 goto exit
 
 rem Slim
 call :copy "slim"
+if ERRORLEVEL 1 goto exit
+call :modify_setup_cfg
 if ERRORLEVEL 1 goto exit
 call :create_archive "slim"
 if ERRORLEVEL 1 goto exit
@@ -168,6 +172,18 @@ for %%G in (%TEMP_FILES_TO_KEEP%) do (
     exit /b 1
   )
 )
+
+exit /b 0
+
+
+:modify_setup_cfg
+rem Remove the files required after 397.93, but are not needed
+type "%TEMP_DIR%\setup.cfg" | findstr /v "EulaHtmlFile FunctionalConsentFile PrivacyPolicyFile">"%TEMP_DIR%\setup2.cfg"
+if ERRORLEVEL 1 exit /b %ERRORLEVEL%
+
+rem Overwrite the origin setup.cfg file
+move /y "%TEMP_DIR%\setup2.cfg" "%TEMP_DIR%\setup.cfg"
+if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
 exit /b 0
 
