@@ -5,9 +5,11 @@ package and creates a new archive.
 
 **WARNING**: USE AT YOUR OWN RISK!
 
+**Make sure you get the file from the [Releases section](https://github.com/XhmikosR/slim-nvidia-drivers/releases), otherwise you will have issues with unix line endings!**
+
 ## Drivers tested:
 
-* v397.93: use v0.2
+* \>= v397.93: use v0.2
 * v388 - v391: use v0.1
 
 ## Requirements:
@@ -29,4 +31,4 @@ This will create two 7z archives, minimal and slim:
 
 ## License
 
-MIT
+[MIT](LICENSE)
