@@ -12,7 +12,7 @@ rem --------------------------------------------------
 setlocal
 
 set "FOLDERS_TO_KEEP_MINIMAL=Display.Driver NVI2"
-set "FOLDERS_TO_KEEP_SLIM=Display.Driver HDAudio NVI2 PhysX"
+set "FOLDERS_TO_KEEP_SLIM=Display.Driver HDAudio NVI2 PhysX PPC"
 set "FILES_TO_KEEP_MINIMAL=EULA.txt license.txt ListDevices.txt setup.cfg setup.exe"
 set "FILES_TO_KEEP_SLIM=%FILES_TO_KEEP_MINIMAL%"
 
@@ -21,7 +21,7 @@ set "ARG1=%~1"
 set "FULL_PATH=%ARG1%"
 set "FILENAME=%~n1"
 set "WORK_FOLDER=%FILENAME%"
-set "SCRIPT_VERSION=0.2"
+set "SCRIPT_VERSION=0.3"
 
 title %BATCH_FILENAME% %FILENAME%
 
@@ -107,7 +107,7 @@ echo Usage: %BATCH_FILENAME% NVIDIA_DRIVER_FILE.exe
 echo.
 echo This will create two 7z archives, minimal and slim:
 echo   * "minimal" includes only the driver
-echo   * "slim" includes the driver, HDAudio and PhysX
+echo   * "slim" includes the driver, HDAudio, PhysX and USB-C HDMI Driver
 echo --------------------------------------------------
 goto exit
 

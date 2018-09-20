@@ -9,6 +9,7 @@ package and creates a new archive.
 
 ## Drivers tested:
 
+* \>= v411.63: use v0.3
 * \>= v397.93: use v0.2
 * v388 - v391: use v0.1
 
