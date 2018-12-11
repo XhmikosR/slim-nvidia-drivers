@@ -32,7 +32,7 @@ if "%ARG1%" == "-help" goto help
 if "%ARG1%" == "/help" goto help
 
 rem Try to detect 7-Zip or 7za.exe; if none is found, show a message and exit
-call :detectSevenzipPath
+call :detect_sevenzip_path
 
 if not exist "%SEVENZIP%" (
   echo 7-Zip or 7za.exe wasn't found!
@@ -213,7 +213,9 @@ if exist "%TEMP_ARCHIVE_DIR%" rd /q /s "%TEMP_ARCHIVE_DIR%"
 exit /b 0
 
 
-:detectSevenzipPath
+:detect_sevenzip_path
+if exist 7za.exe (set "SEVENZIP=7za.exe" & exit /b)
+
 for %%G in (7z.exe) do (set "SEVENZIP_PATH=%%~$PATH:G")
 if exist "%SEVENZIP_PATH%" (set "SEVENZIP=%SEVENZIP_PATH%" & exit /b)
 
