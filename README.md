@@ -13,6 +13,10 @@ package and creates a new archive.
 * \>= v397.93: use v0.2
 * v388 - v391: use v0.1
 
+### Cards tested
+
+Note that the resulting drivers have been tested on GTX 1060, GTX 1070 and MX 150 cards. If you own a newer card that needs other components to be included, please make a Pull Request.
+
 ## Requirements:
 
 * a) [7-Zip](https://www.7-zip.org/download.html) installed or b) [7za.exe](https://www.7-zip.org/download.html) in your `%PATH%`, or in the same folder as this script
