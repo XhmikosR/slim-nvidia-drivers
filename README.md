@@ -9,6 +9,7 @@ package and creates a new archive.
 
 ## Drivers tested:
 
+* \>= v440.97: use v0.5
 * \>= v411.63: use v0.3
 * \>= v397.93: use v0.2
 * v388 - v391: use v0.1
@@ -28,6 +29,8 @@ Note that the resulting drivers have been tested on GTX 1060, GTX 1070 and MX 15
 ```
 slim-nvidia-drivers.bat NVIDIA_DRIVER_FILE.exe
 ```
+
+Or just drag and drop the `NVIDIA_DRIVER_FILE.exe` on the bat file.
 
 This will create two 7z archives, minimal and slim:
 
