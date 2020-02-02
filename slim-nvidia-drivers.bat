@@ -11,8 +11,8 @@ rem --------------------------------------------------
 :start
 setlocal
 
-set "FOLDERS_TO_KEEP_MINIMAL=Display.Driver NVI2"
-set "FOLDERS_TO_KEEP_SLIM=Display.Driver HDAudio NVI2 PhysX PPC"
+set "FOLDERS_TO_KEEP_MINIMAL=Display.Driver NGXCore NVI2 PPC"
+set "FOLDERS_TO_KEEP_SLIM=Display.Driver HDAudio NGXCore NVI2 PhysX PPC"
 set "FILES_TO_KEEP_MINIMAL=EULA.txt ListDevices.txt setup.cfg setup.exe"
 set "FILES_TO_KEEP_SLIM=%FILES_TO_KEEP_MINIMAL%"
 
@@ -21,7 +21,7 @@ set "ARG1=%~1"
 set "FULL_PATH=%ARG1%"
 set "FILENAME=%~n1"
 set "WORK_FOLDER=%FILENAME%"
-set "SCRIPT_VERSION=0.5"
+set "SCRIPT_VERSION=0.6"
 
 title %BATCH_FILENAME% %FILENAME%
 
