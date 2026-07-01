@@ -16,7 +16,8 @@ package and creates a new archive.
 
 ### Cards tested
 
-Note that the resulting drivers have been tested on GTX 1060, GTX 1070 and MX 150 cards. If you own a newer card that needs other components to be included, please make a Pull Request.
+Note that the resulting drivers have been tested on GTX 1060, GTX 1070 and MX 150 cards.
+If you own a newer card that needs other components to be included, please make a pull request.
 
 ## Requirements:
 
