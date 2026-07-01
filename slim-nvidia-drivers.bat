@@ -21,7 +21,6 @@ set "SCRIPT_DIR=%~dp0"
 set "ARG1=%~1"
 set "FULL_PATH=%ARG1%"
 set "FILENAME=%~n1"
-set "WORK_FOLDER=%FILENAME%"
 set "SCRIPT_VERSION=0.5"
 
 title %BATCH_FILENAME% %FILENAME%
@@ -49,39 +48,36 @@ if not exist "%FULL_PATH%" (
   echo "%FULL_PATH%" wasn't found! & goto exit
 )
 
-rem Remove the old folder if it exists
-if exist "%WORK_FOLDER%" rd /q /s "%WORK_FOLDER%"
+rem Extract to a fresh, unique folder so a previous run isn't clobbered
+call :find_unique "%FILENAME%" ""
+set "WORK_FOLDER=%UNIQUE_PATH%"
 
 rem Extract the driver
 "%SEVENZIP%" x "%FULL_PATH%" -o"%WORK_FOLDER%"
 if %ERRORLEVEL% neq 0 (
   echo. & echo *** [ERROR] Extracting "%FULL_PATH%" failed! & echo.
+  if exist "%WORK_FOLDER%" rd /q /s "%WORK_FOLDER%"
   goto exit
 )
 
-rem Switch to the drivers folder
+rem Work inside the extracted folder
 pushd "%WORK_FOLDER%"
 
-rem Minimal
-call :copy "minimal"
-if ERRORLEVEL 1 goto exit
+rem The kept files are identical for every type, so prepare setup.cfg once
 call :modify_setup_cfg
-if ERRORLEVEL 1 goto exit
+if ERRORLEVEL 1 goto cleanup
+
+rem Minimal
 call :create_archive "minimal"
-if ERRORLEVEL 1 goto exit
+if ERRORLEVEL 1 goto cleanup
 
 rem Slim
-call :copy "slim"
-if ERRORLEVEL 1 goto exit
-call :modify_setup_cfg
-if ERRORLEVEL 1 goto exit
 call :create_archive "slim"
-if ERRORLEVEL 1 goto exit
+if ERRORLEVEL 1 goto cleanup
 
+:cleanup
 popd
-
-rem Remove the drivers folder
-rd /q /s "%WORK_FOLDER%"
+if exist "%WORK_FOLDER%" rd /q /s "%WORK_FOLDER%"
 
 
 :exit
@@ -113,105 +109,78 @@ echo --------------------------------------------------
 goto exit
 
 
-:copy
-set "TYPE=%~1"
-set "TEMP_DIR=_temp_%TYPE%"
-
-rem Create a temporary folder
-if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
-
-rem Copy all the things
-call :copy_folders "%TYPE%"
-if ERRORLEVEL 1 exit /b %ERRORLEVEL%
-call :copy_files "%TYPE%"
-if ERRORLEVEL 1 exit /b %ERRORLEVEL%
-
-exit /b 0
-
-
-:copy_folders
-if "%TYPE%" == "minimal" (
-  set "TEMP_FOLDERS_TO_KEEP=%FOLDERS_TO_KEEP_MINIMAL%"
-) else (
-  set "TEMP_FOLDERS_TO_KEEP=%FOLDERS_TO_KEEP_SLIM%"
-)
-
-rem Copy the folders we want to keep into the temporary folder
-for /d %%G in (%TEMP_FOLDERS_TO_KEEP%) do (
-  if not exist "%%G" (
-    echo. & echo *** [ERROR] "%%G" doesn't exist in the drivers file! & echo.
-    exit /b 1
-  )
-
-  xcopy "%%G" "%TEMP_DIR%\%%G" /i /s /h /e /k /q /r /y /v
-  if %ERRORLEVEL% neq 0 (
-    echo. & echo *** [ERROR] Copying folders failed! & echo.
-    exit /b 1
-  )
-)
-
-exit /b 0
-
-
-:copy_files
-if "%TYPE%" == "minimal" (
-  set "TEMP_FILES_TO_KEEP=%FILES_TO_KEEP_MINIMAL%"
-) else (
-  set "TEMP_FILES_TO_KEEP=%FILES_TO_KEEP_SLIM%"
-)
-
-rem Copy the files we want to keep into the temporary folder
-for %%G in (%TEMP_FILES_TO_KEEP%) do (
-  if not exist "%%G" (
-    echo. & echo *** [ERROR] "%%G" doesn't exist in the drivers file! & echo.
-    exit /b 1
-  )
-
-  copy /y /v "%%G" "%TEMP_DIR%\"
-  if %ERRORLEVEL% neq 0 (
-    echo. & echo *** [ERROR] Copying files failed! & echo.
-    exit /b 1
-  )
-)
-
-exit /b 0
-
-
 :modify_setup_cfg
 rem Remove the files required after 397.93, but are not needed
-type "%TEMP_DIR%\setup.cfg" | findstr /v "EulaHtmlFile FunctionalConsentFile PrivacyPolicyFile">"%TEMP_DIR%\setup2.cfg"
-if ERRORLEVEL 1 exit /b %ERRORLEVEL%
+findstr /v "EulaHtmlFile FunctionalConsentFile PrivacyPolicyFile" "setup.cfg" > "setup.tmp"
+if ERRORLEVEL 1 (
+  echo. & echo *** [ERROR] Editing setup.cfg failed! & echo.
+  exit /b 1
+)
 
-rem Overwrite the origin setup.cfg file
-move /y "%TEMP_DIR%\setup2.cfg" "%TEMP_DIR%\setup.cfg"
-if ERRORLEVEL 1 exit /b %ERRORLEVEL%
+rem Overwrite the original setup.cfg file
+move /y "setup.tmp" "setup.cfg" >nul
+if ERRORLEVEL 1 exit /b 1
 
 exit /b 0
 
 
 :create_archive
-rem Rename the temporary directory
-set "TEMP_ARCHIVE_DIR=%FILENAME%_%TYPE%"
-rename "%TEMP_DIR%" "%TEMP_ARCHIVE_DIR%"
+rem %1 = type name
+set "TYPE=%~1"
+if "%TYPE%" == "minimal" (
+  set "FOLDERS=%FOLDERS_TO_KEEP_MINIMAL%"
+) else (
+  set "FOLDERS=%FOLDERS_TO_KEEP_SLIM%"
+)
 
-rem Just in case NUMBER_OF_PROCESSORS isn't defined
-if not defined NUMBER_OF_PROCESSORS set NUMBER_OF_PROCESSORS=4
+rem Bail if a wanted folder is missing
+for %%G in (%FOLDERS%) do (
+  if not exist "%%G\" (
+    echo. & echo *** [ERROR] "%%G" doesn't exist in the drivers file! & echo.
+    exit /b 1
+  )
+)
 
-rem Create the new archive
-start "7-Zip" /b /wait "%SEVENZIP%" a -t7z ""%TEMP_ARCHIVE_DIR%.7z"" ""%TEMP_ARCHIVE_DIR%\*"" -mmt=%NUMBER_OF_PROCESSORS% -m0=LZMA2 -mx9
+rem Bail if a wanted file is missing
+for %%G in (%FILES_TO_KEEP_MINIMAL%) do (
+  if not exist "%%G" (
+    echo. & echo *** [ERROR] "%%G" doesn't exist in the drivers file! & echo.
+    exit /b 1
+  )
+)
 
+rem Pick a unique name so a previous run's archive isn't overwritten
+call :find_unique "..\%FILENAME%_%TYPE%" ".7z"
+set "ARCHIVE_PATH=%UNIQUE_PATH%"
+for %%A in ("%ARCHIVE_PATH%") do set "ARCHIVE=%%~nxA"
+
+rem Create the archive directly from the kept folders and files
+"%SEVENZIP%" a -t7z "%ARCHIVE_PATH%" %FOLDERS% %FILES_TO_KEEP_MINIMAL% -mmt=on -m0=LZMA2 -mx9
 if %ERRORLEVEL% neq 0 (
-  echo. & echo *** [ERROR] Creating 7z archive! & echo.
+  echo. & echo *** [ERROR] Creating "%ARCHIVE%" failed! & echo.
   exit /b 1
 )
 
-move /y "%TEMP_ARCHIVE_DIR%.7z" ".."
-
-rem Remove the temporary folders
-if exist "%TEMP_DIR%" rd /q /s "%TEMP_DIR%"
-if exist "%TEMP_ARCHIVE_DIR%" rd /q /s "%TEMP_ARCHIVE_DIR%"
+rem Verify the archive we just created
+"%SEVENZIP%" t "%ARCHIVE_PATH%" >nul
+if %ERRORLEVEL% neq 0 (
+  echo. & echo *** [ERROR] Verifying "%ARCHIVE%" failed! & echo.
+  exit /b 1
+)
 
 exit /b 0
+
+
+:find_unique
+rem %1 = base path, %2 = suffix (".7z" for a file, "" for a folder)
+rem Sets UNIQUE_PATH to base+suffix, or base_N+suffix if that already exists
+set "UNIQUE_PATH=%~1%~2"
+set "_u=1"
+:find_unique_next
+if not exist "%UNIQUE_PATH%" exit /b 0
+set "UNIQUE_PATH=%~1_%_u%%~2"
+set /a _u+=1
+goto find_unique_next
 
 
 :detect_sevenzip_path
