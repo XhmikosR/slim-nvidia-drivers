@@ -21,21 +21,29 @@ Note that the resulting drivers have been tested on GTX 1060, GTX 1070 and MX 15
 ## Requirements:
 
 * a) [7-Zip](https://www.7-zip.org/download.html) installed or b) [7za.exe](https://www.7-zip.org/download.html) in your `%PATH%`, or in the same folder as this script
-* A recent Windows version; the script is only tested on Windows 10
+* A recent Windows version; the script is only tested on Windows 11
 * The NVIDIA driver already downloaded somewhere on your computer :)
 
 ## Usage:
 
-```
-slim-nvidia-drivers.bat NVIDIA_DRIVER_FILE.exe
+```bat
+slim-nvidia-drivers.bat [-type minimal|slim|all] NVIDIA_DRIVER_FILE.exe
 ```
 
 Or just drag and drop the `NVIDIA_DRIVER_FILE.exe` on the bat file.
 
-This will create two 7z archives, minimal and slim:
+Arguments can be given in any order, and `-type`/`--type` are equivalent, so all of these work:
 
-* "minimal" includes only the driver
-* "slim" includes the driver, HDAudio and PhysX
+```bat
+slim-nvidia-drivers.bat -type slim NVIDIA_DRIVER_FILE.exe
+slim-nvidia-drivers.bat NVIDIA_DRIVER_FILE.exe --type slim
+```
+
+`-type` picks which archive(s) to create:
+
+* `minimal` includes only the driver (Display.Driver, NVI2)
+* `slim` includes the driver, HDAudio, PhysX and the USB-C HDMI driver (default when `-type` is omitted)
+* `all` builds both
 
 ## License
 
