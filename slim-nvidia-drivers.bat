@@ -17,6 +17,7 @@ set "FILES_TO_KEEP_MINIMAL=EULA.txt ListDevices.txt setup.cfg setup.exe"
 set "FILES_TO_KEEP_SLIM=%FILES_TO_KEEP_MINIMAL%"
 
 set "BATCH_FILENAME=%~nx0"
+set "SCRIPT_DIR=%~dp0"
 set "ARG1=%~1"
 set "FULL_PATH=%ARG1%"
 set "FILENAME=%~n1"
@@ -41,7 +42,7 @@ if not exist "%SEVENZIP%" (
 )
 
 rem Switch to the batch file's directory
-cd /d %~dp0
+cd /d "%SCRIPT_DIR%"
 
 rem If the file doesn't exist show a message and exit
 if not exist "%FULL_PATH%" (
@@ -214,7 +215,8 @@ exit /b 0
 
 
 :detect_sevenzip_path
-if exist 7za.exe (set "SEVENZIP=7za.exe" & exit /b)
+rem Prefer a 7za.exe sitting next to this script
+if exist "%SCRIPT_DIR%7za.exe" (set "SEVENZIP=%SCRIPT_DIR%7za.exe" & exit /b)
 
 for %%G in (7z.exe) do (set "SEVENZIP_PATH=%%~$PATH:G")
 if exist "%SEVENZIP_PATH%" (set "SEVENZIP=%SEVENZIP_PATH%" & exit /b)
