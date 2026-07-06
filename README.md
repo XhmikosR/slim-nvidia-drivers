@@ -28,7 +28,7 @@ If you own a newer card that needs other components to be included, please make 
 ## Usage:
 
 ```bat
-slim-nvidia-drivers.bat [-type minimal|slim|all] NVIDIA_DRIVER_FILE.exe
+slim-nvidia-drivers.bat [-type minimal|slim|all] [-no-compress] NVIDIA_DRIVER_FILE.exe
 ```
 
 Or just drag and drop the `NVIDIA_DRIVER_FILE.exe` on the bat file.
@@ -45,6 +45,8 @@ slim-nvidia-drivers.bat NVIDIA_DRIVER_FILE.exe --type slim
 * `minimal` includes only the driver (Display.Driver, NVI2)
 * `slim` includes the driver, HDAudio, PhysX and the USB-C HDMI driver (default when `-type` is omitted)
 * `all` builds both
+
+`-no-compress` leaves the slimmed driver as a plain folder instead of a `.7z` archive, which skips the slow compression step. 7-Zip is still needed to extract the driver.
 
 ## License
 

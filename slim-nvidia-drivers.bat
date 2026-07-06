@@ -26,6 +26,7 @@ set "SCRIPT_VERSION=0.5"
 
 set "FULL_PATH="
 set "BUILD_TYPE="
+set "NO_COMPRESS="
 
 rem Parse the arguments in any order: -type <type> and the driver file
 :parse_args
@@ -39,6 +40,10 @@ if /i "%~1" == "/?" goto help
 if /i "%~1" == "-type"  (set "BUILD_TYPE=%~2" & shift & shift & goto parse_args)
 if /i "%~1" == "--type" (set "BUILD_TYPE=%~2" & shift & shift & goto parse_args)
 if /i "%~1" == "/type"  (set "BUILD_TYPE=%~2" & shift & shift & goto parse_args)
+
+if /i "%~1" == "-no-compress"  (set "NO_COMPRESS=1" & shift & goto parse_args)
+if /i "%~1" == "--no-compress" (set "NO_COMPRESS=1" & shift & goto parse_args)
+if /i "%~1" == "/no-compress"  (set "NO_COMPRESS=1" & shift & goto parse_args)
 
 rem Anything else starting with - or / is an unrecognized option
 set "CURRENT_ARG=%~1"
@@ -154,7 +159,7 @@ echo   * a) 7-Zip installed or b) 7za.exe in your %%PATH%%, or in the same folde
 echo   * A recent Windows version; the script is only tested on Windows 11
 echo   * The NVIDIA driver already downloaded somewhere on your computer :)
 echo.
-echo Usage: %BATCH_FILENAME% [-type minimal^|slim^|all] NVIDIA_DRIVER_FILE.exe
+echo Usage: %BATCH_FILENAME% [-type minimal^|slim^|all] [-no-compress] NVIDIA_DRIVER_FILE.exe
 echo.
 echo Arguments can be given in any order, e.g.:
 echo   %BATCH_FILENAME% -type slim NVIDIA_DRIVER_FILE.exe
@@ -164,6 +169,9 @@ echo Build types:
 echo   * minimal - only the driver
 echo   * slim    - the driver, HDAudio, PhysX and USB-C HDMI Driver (default)
 echo   * all     - both of the above
+echo.
+echo -no-compress leaves the slimmed driver as a folder instead of a .7z archive.
+echo 7-Zip is still needed to extract the driver.
 echo --------------------------------------------------
 goto exit
 
@@ -184,21 +192,13 @@ exit /b 0
 
 
 :build_variant
-rem Resolve FOLDERS_<type> and build that archive
+rem Resolve FOLDERS_<type> and build that variant
 set "VARIANT=%~1"
 call set "FOLDERS=%%FOLDERS_%VARIANT%%%"
 if not defined FOLDERS (
   echo. & echo *** [ERROR] No folder list defined for build type "%VARIANT%"! & echo.
   exit /b 1
 )
-call :create_archive "%VARIANT%" "%FOLDERS%"
-exit /b %ERRORLEVEL%
-
-
-:create_archive
-rem %1 = variant name, %2 = space separated list of folders to include
-set "VARIANT=%~1"
-set "FOLDERS=%~2"
 
 rem Bail if a wanted folder is missing
 for %%G in (%FOLDERS%) do (
@@ -215,6 +215,20 @@ for %%G in (%FILES_TO_KEEP%) do (
     exit /b 1
   )
 )
+
+rem Compress into a .7z, or with -no-compress just copy the slimmed folder
+if defined NO_COMPRESS (
+  call :copy_variant "%VARIANT%" "%FOLDERS%"
+) else (
+  call :create_archive "%VARIANT%" "%FOLDERS%"
+)
+exit /b %ERRORLEVEL%
+
+
+:create_archive
+rem %1 = variant name, %2 = space separated list of folders to include
+set "VARIANT=%~1"
+set "FOLDERS=%~2"
 
 rem Pick a unique name so a previous run's archive isn't overwritten
 call :find_unique "..\%FILENAME%_%VARIANT%" ".7z"
@@ -233,6 +247,40 @@ rem Verify the archive we just created
 if %ERRORLEVEL% neq 0 (
   echo. & echo *** [ERROR] Verifying "%ARCHIVE%" failed! & echo.
   exit /b 1
+)
+
+exit /b 0
+
+
+:copy_variant
+rem %1 = variant name, %2 = folders to include; copies the slimmed set to a folder
+set "VARIANT=%~1"
+set "FOLDERS=%~2"
+
+rem Pick a unique folder name so a previous run isn't overwritten
+call :find_unique "..\%FILENAME%_%VARIANT%" ""
+set "OUT_DIR=%UNIQUE_PATH%"
+for %%A in ("%OUT_DIR%") do set "OUT_NAME=%%~nxA"
+
+echo. & echo Creating slimmed folder "%OUT_NAME%"...
+mkdir "%OUT_DIR%"
+
+rem Copy the kept folders
+for %%G in (%FOLDERS%) do (
+  xcopy "%%G" "%OUT_DIR%\%%G\" /e /i /q /h /k >nul
+  if ERRORLEVEL 1 (
+    echo. & echo *** [ERROR] Copying "%%G" failed! & echo.
+    exit /b 1
+  )
+)
+
+rem Copy the kept files
+for %%G in (%FILES_TO_KEEP%) do (
+  copy /y "%%G" "%OUT_DIR%\" >nul
+  if ERRORLEVEL 1 (
+    echo. & echo *** [ERROR] Copying "%%G" failed! & echo.
+    exit /b 1
+  )
 )
 
 exit /b 0
